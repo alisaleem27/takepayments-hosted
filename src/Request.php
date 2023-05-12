@@ -19,10 +19,10 @@ class Request implements JsonSerializable
     public Type $type = Type::Ecommerce;
 
     #[Mandatory]
-    public int $countryCode = 829;
+    public int $countryCode = 826;
 
     #[Mandatory]
-    public int $currencyCode = 829;
+    public int $currencyCode = 826;
 
     #[Mandatory]
     public string $merchantID;

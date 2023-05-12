@@ -1,5 +1,5 @@
 {
-    "name": "alisaleem27/takepayments-hosted",
+    "name": "alisaleem/takepayments-hosted",
     "type": "library",
     "autoload": {
         "psr-4": {

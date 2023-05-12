@@ -4,21 +4,13 @@ declare(strict_types=1);
 
 namespace AliSaleem\TakePaymentsHosted;
 
-class Gateway
+readonly class Gateway
 {
-    const RC_SUCCESS = 0;
-    const RC_DO_NOT_HONOR = 5;
-    const RC_NO_REASON_TO_DECLINE = 85;
-    const RC_3DS_AUTHENTICATION_REQUIRED = 0x1010A;
-
-    static protected $hostedUrl = 'https://gw1.tponlinepayments.com/paymentform/';
-
     public function __construct(
-        private readonly string $merchantId,
-        private readonly string $merchantSecret,
-        private ?string $merchantPwd = null,
-        protected ?string $proxyUrl = null,
-        protected bool $debug = true
+        private string $hostedUrl,
+        private string $merchantId,
+        private string $merchantSecret,
+        private ?string $merchantPwd = null
     ) {
     }
 
@@ -26,15 +18,24 @@ class Gateway
     {
         $request->merchantID = $this->merchantId;
         $request->merchantPwd = $this->merchantPwd;
-        $request->sign($this->merchantSecret);
+        $request->signature = $this->sign($request->toArray());
 
         return sprintf(
             '<form method="post" action="%s" %s>'.PHP_EOL.'%s'.PHP_EOL.'%s'.PHP_EOL.'</form>',
-            htmlentities(static::$hostedUrl, ENT_COMPAT, 'UTF-8'),
+            htmlentities($this->hostedUrl, ENT_COMPAT, 'UTF-8'),
             $options['formAttrs'] ?? '',
             $this->getInputElements($request),
             $this->getSubmitElement($options)
         );
+    }
+
+    public function sign(array $data): string
+    {
+        unset($data['signature']);
+        ksort($data);
+        $ret = preg_replace('/%0D%0A|%0A%0D|%0D/i', '%0A', http_build_query($data, '', '&'));
+
+        return hash('SHA512', $ret.$this->merchantSecret);
     }
 
     protected function getSubmitElement(array $options): string

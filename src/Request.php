@@ -13,6 +13,18 @@ use ReflectionProperty;
 class Request implements JsonSerializable
 {
     #[Mandatory]
+    public int $amount;
+
+    #[Mandatory]
+    public string $orderRef;
+
+    #[Mandatory]
+    public string $transactionUnique;
+
+    #[Mandatory]
+    public string $redirectURL;
+
+    #[Mandatory]
     public Action $action = Action::Sale;
 
     #[Mandatory]
@@ -42,20 +54,75 @@ class Request implements JsonSerializable
 
     public ?string $callbackURL;
 
-    public ?string $customerPostCode;
+    public ?string $cardNumber;
+
+    public ?string $cardCVV;
+
+    public ?string $cardExpiryMonth;
+
+    public ?string $cardExpiryYear;
+
+    public ?string $cardExpiryDate;
+
+    public ?string $customerName;
 
     public ?string $customerAddress;
 
+    public ?string $customerTown;
+
+    public ?string $customerCounty;
+
+    public ?string $customerPostcode;
+
+    public ?string $customerCountryCode;
+
+    public ?string $customerEmail;
+
+    public ?string $customerPhone;
+
+    public ?string $receiverDateOfBirth;
+
+    public ?bool $cardCVVMandatory;
+
+    public ?bool $customerNameMandatory;
+
+    public ?bool $customerFullNameMandatory;
+
+    public ?bool $customerAddressMandatory;
+
+    public ?bool $customerTownMandatory;
+
+    public ?bool $customerCountyMandatory;
+
+    public ?bool $customerPostcodeMandatory;
+
+    public ?bool $customerCountryCodeMandatory;
+
+    public ?bool $customerEmailMandatory;
+
+    public ?bool $customerPhoneMandatory;
+
+    public ?bool $receiverDateOfBirthMandatory;
+
+    public ?string $formAmountEditable;
+
+    public ?string $formResponsive;
+
+    public ?string $formAllowCancel;
+
+    public ?string $allowedPaymentMethods;
+
     public function __construct(
-        #[Mandatory]
-        public int $amount,
-        #[Mandatory]
-        public string $orderRef,
-        #[Mandatory]
-        public string $transactionUnique,
-        #[Mandatory]
-        public string $redirectURL
+        int $amount,
+        string $orderRef,
+        string $transactionUnique,
+        string $redirectURL
     ) {
+        $this->amount = $amount;
+        $this->orderRef = $orderRef;
+        $this->transactionUnique = $transactionUnique;
+        $this->redirectURL = $redirectURL;
+
         $reflection = new ReflectionClass($this);
         $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
         foreach ($properties as $property) {
@@ -63,57 +130,6 @@ class Request implements JsonSerializable
                 $property->setValue($this, null);
             }
         }
-    }
-
-    public function orderDate(?DateTimeImmutable $orderDate): static
-    {
-        $this->orderDate = $orderDate;
-
-        return $this;
-    }
-
-    public function captureDelay(?int $captureDelay): static
-    {
-        $this->captureDelay = $captureDelay;
-
-        return $this;
-    }
-
-    public function remoteAddress(?string $remoteAddress): static
-    {
-        $this->remoteAddress = $remoteAddress;
-
-        return $this;
-    }
-
-    public function callbackURL(?string $callbackURL): static
-    {
-        $this->callbackURL = $callbackURL;
-
-        return $this;
-    }
-
-    public function customerPostCode(?string $customerPostCode): static
-    {
-        $this->customerPostCode = $customerPostCode;
-
-        return $this;
-    }
-
-    public function customerAddress(?string $customerAddress): static
-    {
-        $this->customerAddress = $customerAddress;
-
-        return $this;
-    }
-
-    public function sign(string $secret): void
-    {
-        $data = $this->toArray();
-        unset($data['signature']);
-        $ret = http_build_query($data, '', '&');
-        $ret = preg_replace('/%0D%0A|%0A%0D|%0D/i', '%0A', $ret);
-        $this->signature = hash('SHA512', $ret.$secret);
     }
 
     public function toArray(): array
@@ -135,8 +151,6 @@ class Request implements JsonSerializable
                 $data[$property->getName()] = $value;
             }
         }
-
-        ksort($data);
 
         return $data;
     }

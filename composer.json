@@ -1,0 +1,16 @@
+{
+    "name": "alisaleem27/takepayments-hosted",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "AliSaleem\\TakepaymentsHosted\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Ali Saleem",
+            "email": "alisaleem@outlook.com"
+        }
+    ],
+    "require": {}
+}

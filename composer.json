@@ -3,7 +3,7 @@
     "type": "library",
     "autoload": {
         "psr-4": {
-            "AliSaleem\\TakepaymentsHosted\\": "src/"
+            "AliSaleem\\TakePaymentsHosted\\": "src/"
         }
     },
     "authors": [

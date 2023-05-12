@@ -4,44 +4,113 @@ declare(strict_types=1);
 
 namespace AliSaleem\TakePaymentsHosted;
 
+use BackedEnum;
+use DateTimeImmutable;
 use JsonSerializable;
+use ReflectionClass;
+use ReflectionProperty;
 
 class Request implements JsonSerializable
 {
+    #[Mandatory]
+    public Action $action = Action::Sale;
+
+    #[Mandatory]
+    public Type $type = Type::Ecommerce;
+
+    #[Mandatory]
+    public int $countryCode = 829;
+
+    #[Mandatory]
+    public int $currencyCode = 829;
+
+    #[Mandatory]
     public string $merchantID;
-    public ?string $merchantPwd;
-    public string $action;
-    public int $type;
-    public int $countryCode;
-    public int $currencyCode;
-    public int $amount;
-    public string $orderRef;
-    public string $formResponsive;
-    public string $transactionUnique;
-    public string $redirectURL;
+
+    #[Mandatory]
     public ?string $signature = null;
 
-    public static function fromArray(array $options): static
-    {
-        $instance = new static();
-        foreach ($options as $key => $value) {
-            if (property_exists($instance, $key)) {
-                $instance->$key = $value;
+    public ?string $merchantPwd;
+
+    public ?PaymentMethod $paymentMethod;
+
+    public ?string $remoteAddress;
+
+    public ?int $captureDelay;
+
+    public ?DateTimeImmutable $orderDate;
+
+    public ?string $callbackURL;
+
+    public ?string $customerPostCode;
+
+    public ?string $customerAddress;
+
+    public function __construct(
+        #[Mandatory]
+        public int $amount,
+        #[Mandatory]
+        public string $orderRef,
+        #[Mandatory]
+        public string $transactionUnique,
+        #[Mandatory]
+        public string $redirectURL
+    ) {
+        $reflection = new ReflectionClass($this);
+        $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
+        foreach ($properties as $property) {
+            if (!$property->getAttributes(Mandatory::class)) {
+                $property->setValue($this, null);
             }
         }
-
-        return $instance;
     }
 
-    public static function fromTransaction(Transaction $transaction): static
+    public function orderDate(?DateTimeImmutable $orderDate): static
     {
-        return static::fromArray($transaction->toArray());
+        $this->orderDate = $orderDate;
+
+        return $this;
+    }
+
+    public function captureDelay(?int $captureDelay): static
+    {
+        $this->captureDelay = $captureDelay;
+
+        return $this;
+    }
+
+    public function remoteAddress(?string $remoteAddress): static
+    {
+        $this->remoteAddress = $remoteAddress;
+
+        return $this;
+    }
+
+    public function callbackURL(?string $callbackURL): static
+    {
+        $this->callbackURL = $callbackURL;
+
+        return $this;
+    }
+
+    public function customerPostCode(?string $customerPostCode): static
+    {
+        $this->customerPostCode = $customerPostCode;
+
+        return $this;
+    }
+
+    public function customerAddress(?string $customerAddress): static
+    {
+        $this->customerAddress = $customerAddress;
+
+        return $this;
     }
 
     public function sign(string $secret): void
     {
         $data = $this->toArray();
-        ksort($data);
+        unset($data['signature']);
         $ret = http_build_query($data, '', '&');
         $ret = preg_replace('/%0D%0A|%0A%0D|%0D/i', '%0A', $ret);
         $this->signature = hash('SHA512', $ret.$secret);
@@ -49,24 +118,27 @@ class Request implements JsonSerializable
 
     public function toArray(): array
     {
-        return array_merge(
-            [
-                'merchantID'        => $this->merchantID,
-                'merchantPwd'       => $this->merchantPwd,
-                'action'            => $this->action,
-                'type'              => $this->type,
-                'countryCode'       => $this->countryCode,
-                'currencyCode'      => $this->currencyCode,
-                'amount'            => $this->amount,
-                'orderRef'          => $this->orderRef,
-                'formResponsive'    => $this->formResponsive,
-                'transactionUnique' => $this->transactionUnique,
-                'redirectURL'       => $this->redirectURL,
-            ],
-            array_filter([
-                'signature' => $this->signature,
-            ])
-        );
+        $reflection = new ReflectionClass($this);
+        $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
+
+        $data = [];
+        foreach ($properties as $property) {
+            $value = $property->getValue($this);
+            $value = match (true) {
+                $value instanceof BackedEnum        => $value->value,
+                $value instanceof DateTimeImmutable => $value->format('Y-m-d H:i:s'),
+                is_bool($value)                     => $value ? 'Y' : 'N',
+                default                             => $value,
+            };
+
+            if ($property->getAttributes(Mandatory::class) || !is_null($value)) {
+                $data[$property->getName()] = $value;
+            }
+        }
+
+        ksort($data);
+
+        return $data;
     }
 
     public function jsonSerialize(): array

@@ -10,6 +10,7 @@ class Gateway
     const RC_DO_NOT_HONOR = 5;
     const RC_NO_REASON_TO_DECLINE = 85;
     const RC_3DS_AUTHENTICATION_REQUIRED = 0x1010A;
+
     static protected $hostedUrl = 'https://gw1.tponlinepayments.com/paymentform/';
 
     public function __construct(
@@ -28,7 +29,7 @@ class Gateway
         $request->sign($this->merchantSecret);
 
         return sprintf(
-            '<form method="post" action="%s" %s>%s %s</form>',
+            '<form method="post" action="%s" %s>'.PHP_EOL.'%s'.PHP_EOL.'%s'.PHP_EOL.'</form>',
             htmlentities(static::$hostedUrl, ENT_COMPAT, 'UTF-8'),
             $options['formAttrs'] ?? '',
             $this->getInputElements($request),

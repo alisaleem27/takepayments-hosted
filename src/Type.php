@@ -6,5 +6,7 @@ namespace AliSaleem\TakePaymentsHosted;
 
 enum Type: int
 {
-    case One = 1;
+    case Ecommerce = 1;
+    case MailOrder = 2;
+    case ContinuousAuthority = 9;
 }
